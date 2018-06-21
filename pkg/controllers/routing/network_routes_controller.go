@@ -60,6 +60,7 @@ type NetworkRoutingController struct {
 	mu                      sync.Mutex
 	clientset               kubernetes.Interface
 	bgpServer               *gobgp.BgpServer
+	bgpListenOnAllIP        bool
 	syncPeriod              time.Duration
 	clusterCIDR             string
 	enablePodEgress         bool
@@ -619,7 +620,11 @@ func (nrc *NetworkRoutingController) startBgpServer() error {
 	var localAddressList []string
 
 	if ipv4IsEnabled() {
-		localAddressList = append(localAddressList, nrc.nodeIP.String())
+		if nrc.bgpListenOnAllIP {
+			localAddressList = append(localAddressList, "0.0.0.0")
+		} else {
+			localAddressList = append(localAddressList, nrc.nodeIP.String())
+		}
 	}
 
 	if ipv6IsEnabled() {
@@ -790,6 +795,9 @@ func NewNetworkRoutingController(clientset kubernetes.Interface,
 
 	nrc.enableOverlays = kubeRouterConfig.EnableOverlay
 
+	if kubeRouterConfig.BGPListenAllIP {
+		nrc.bgpListenOnAllIP = true
+	}
 	// Convert ints to uint32s
 	peerASNs := make([]uint32, 0)
 	for _, i := range kubeRouterConfig.PeerASNs {
