@@ -46,6 +46,7 @@ type KubeRouterConfig struct {
 	StaticCidrs             []string
 	Version                 bool
 	VLevel                  string
+	EnableEGPOrigin         bool
 	// FullMeshPassword    string
 }
 
@@ -124,6 +125,8 @@ func (s *KubeRouterConfig) AddFlags(fs *pflag.FlagSet) {
 		"Password for authenticating against the BGP peer defined with \"--peer-router-ips\".")
 	fs.StringSliceVar(&s.StaticCidrs, "static-cidrs", s.StaticCidrs,
 		"Static CIDRs to announce via bgp.")
+	fs.BoolVar(&s.EnableEGPOrigin, "enable-egp-origin", false,
+		"Overrides the default BGP Path Attribute Origin (default igp) with the egp value.")
 	fs.BoolVar(&s.EnablePprof, "enable-pprof", false,
 		"Enables pprof for debugging performance and memory leak issues.")
 	fs.Uint16Var(&s.MetricsPort, "metrics-port", 0, "Prometheus metrics port, (Default 0, Disabled)")

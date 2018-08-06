@@ -17,7 +17,7 @@ import (
 func (nrc *NetworkRoutingController) bgpAdvertiseVIP(vip string) error {
 
 	attrs := []bgp.PathAttributeInterface{
-		bgp.NewPathAttributeOrigin(0),
+		bgp.NewPathAttributeOrigin(nrc.bgpPathAttributeOrigin),
 		bgp.NewPathAttributeNextHop(nrc.nodeIP.String()),
 	}
 

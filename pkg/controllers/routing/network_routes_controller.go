@@ -94,6 +94,7 @@ type NetworkRoutingController struct {
 	pathPrependCount        uint8
 	pathPrepend             bool
 	staticCidrs             []string
+	bgpPathAttributeOrigin  uint8
 
 	nodeLister cache.Indexer
 	svcLister  cache.Indexer
@@ -349,7 +350,7 @@ func (nrc *NetworkRoutingController) advertisePodRoute() error {
 	subnet := cidrStr[0]
 	cidrLen, _ := strconv.Atoi(cidrStr[1])
 	attrs := []bgp.PathAttributeInterface{
-		bgp.NewPathAttributeOrigin(0),
+		bgp.NewPathAttributeOrigin(nrc.bgpPathAttributeOrigin),
 		bgp.NewPathAttributeNextHop(nrc.nodeIP.String()),
 	}
 
@@ -369,7 +370,7 @@ func (nrc *NetworkRoutingController) advertiseStaticCidrRoutes() error {
 		subnet := cidrStr[0]
 		cidrLen, _ := strconv.Atoi(cidrStr[1])
 		attrs := []bgp.PathAttributeInterface{
-			bgp.NewPathAttributeOrigin(0),
+			bgp.NewPathAttributeOrigin(nrc.bgpPathAttributeOrigin),
 			bgp.NewPathAttributeNextHop(nrc.nodeIP.String()),
 		}
 
@@ -798,6 +799,11 @@ func NewNetworkRoutingController(clientset kubernetes.Interface,
 	nrc.enablePodEgress = kubeRouterConfig.EnablePodEgress
 	nrc.syncPeriod = kubeRouterConfig.RoutesSyncPeriod
 	nrc.staticCidrs = kubeRouterConfig.StaticCidrs
+	if kubeRouterConfig.EnableEGPOrigin {
+		nrc.bgpPathAttributeOrigin = bgp.BGP_ORIGIN_ATTR_TYPE_EGP
+	} else {
+		nrc.bgpPathAttributeOrigin = bgp.BGP_ORIGIN_ATTR_TYPE_IGP
+	}
 	nrc.clientset = clientset
 	nrc.activeNodes = make(map[string]bool)
 	nrc.bgpRRClient = false
